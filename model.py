@@ -1,52 +1,48 @@
 import csv
 import cv2
 import numpy as np
+import sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 
 # Read in lines of driving log file
-lines = []
+samples = []
 with open('./data/driving_log.csv') as csvfile:
     reader = csv.reader(csvfile)
-    for line in reader:
-        lines.append(line)
+    for sample in reader:
+        samples.append(sample)
 
-# Load images and measurements and store them into X_train and y_train 
-correction = 0.3 # this is a parameter to tune the left and right correction for left and right camera
-images = []
-measurements = []
-for line in lines:
-    for i in range(1):
-        source_path = line[i]
-        filename = source_path.split('\\')[-1]
-        current_path = './data/IMG/' + filename
-        image = cv2.imread(current_path)
-        images.append(image)
-        # create adjusted steering measurements for the side camera images
-        measurement = float(line[3])
-        if(i == 0):
-            # nothing to do
-            measurement = measurement
-        elif(i == 1):
-            # steering more to right (left camera picture)
-            measurement = measurement + correction
-        elif(i == 2):
-            # steering more to left (right camera picture)
-            measurement = measurement - correction
-        else:
-            print("Error, unexpected loop range")
-        measurements.append(measurement)
+# augmentation was done previously
+train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 
-augmented_images, augmented_measurements = [], []
-for image,measurement in zip(images,measurements):
-        augmented_images.append(image)
-        augmented_measurements.append(measurement)
-        augmented_images.append(cv2.flip(image,1))
-        augmented_measurements.append(measurement*-1.0)
+print(train_samples[0])
+print(validation_samples[0])
 
+# Load batches of images and angles and store them into X_train and y_train 
+def generator(stamp, batch_size=32):
+    num_samples = len(stamp)
+    while 1: # Loop forever so the generator never terminates
+        shuffle(stamp)
+        for offset in range(0, num_samples, batch_size):
+            batch_samples = stamp[offset:offset+batch_size]
+            images = []
+            angles = []
+            for batch_sample in batch_samples:
+                current_path = './data/IMG/' + sample[0].split('\\')[-1]
+                image = cv2.imread(current_path)
+                images.append(image)
+                angle = float(sample[3])
+                angles.append(angle)
+            X_train = np.array(images)
+            y_train = np.array(angles)
+            yield sklearn.utils.shuffle(X_train, y_train)
+
+# compile and train the model using the generator function
+train_generator = generator(train_samples, batch_size=32)
+validation_generator = generator(validation_samples, batch_size=32)
 
 # Check the shapes
-print("Number of Images:" + str(len(images)))
-X_train = np.array(augmented_images)
-y_train = np.array(augmented_measurements)
+print("Number of Images:" + str(len(samples)))
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda, Cropping2D
@@ -68,9 +64,11 @@ model.add(Dense(10))
 model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
-print("Shape of X_train:", X_train.shape)
-print("Shape of y_train:", y_train.shape)
-model.fit(X_train, y_train, nb_epoch=4, validation_split=0.2, shuffle=True)
+
+#X_train, y_train = next(train_generator)
+#print(X_train.shape)
+#print(y_train.shape)
+
+model.fit_generator(train_generator, samples_per_epoch= len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=4)
 
 model.save('model.h5')
-
