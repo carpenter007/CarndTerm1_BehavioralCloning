@@ -45,7 +45,7 @@ validation_generator = generator(validation_samples, batch_size=32)
 print("Number of Images:" + str(len(samples)))
 
 from keras.models import Sequential
-from keras.layers import Flatten, Dense, Lambda, Cropping2D
+from keras.layers import Flatten, Dense, Lambda, Cropping2D, Dropout
 from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
 
@@ -58,6 +58,7 @@ model.add(Convolution2D(48,5,5,subsample=(2,2),activation="relu"))
 model.add(Convolution2D(64,3,3,activation="relu"))
 model.add(Convolution2D(64,3,3,activation="relu"))
 model.add(Flatten())
+model.add(Dropout(0.25))
 model.add(Dense(100))
 model.add(Dense(50))
 model.add(Dense(10))
