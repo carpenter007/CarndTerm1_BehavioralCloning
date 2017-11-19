@@ -28,10 +28,10 @@ def generator(stamp, batch_size=32):
             images = []
             angles = []
             for batch_sample in batch_samples:
-                current_path = './data/IMG/' + sample[0].split('\\')[-1]
+                current_path = './data/IMG/' + batch_sample[0].split('\\')[-1]
                 image = cv2.imread(current_path)
                 images.append(image)
-                angle = float(sample[3])
+                angle = float(batch_sample[3])
                 angles.append(angle)
             X_train = np.array(images)
             y_train = np.array(angles)
@@ -64,10 +64,6 @@ model.add(Dense(10))
 model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
-
-#X_train, y_train = next(train_generator)
-#print(X_train.shape)
-#print(y_train.shape)
 
 model.fit_generator(train_generator, samples_per_epoch= len(train_samples), validation_data=validation_generator, nb_val_samples=len(validation_samples), nb_epoch=4)
 
