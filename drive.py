@@ -3,7 +3,7 @@ import base64
 from datetime import datetime
 import os
 import shutil
-
+import cv2
 import numpy as np
 import socketio
 import eventlet
@@ -47,6 +47,10 @@ controller = SimplePIController(0.1, 0.002)
 set_speed = 15
 controller.set_desired(set_speed)
 
+def changeColorspace(img):
+    #change from RGB image to yuv image
+    imgNew = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
+    return imgNew
 
 @sio.on('telemetry')
 def telemetry(sid, data):
@@ -60,7 +64,7 @@ def telemetry(sid, data):
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
-        image_array = np.asarray(image)
+        image_array = changeColorspace(np.asarray(image))
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))

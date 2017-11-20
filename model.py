@@ -18,6 +18,11 @@ train_samples, validation_samples = train_test_split(samples, test_size=0.2)
 print(train_samples[0])
 print(validation_samples[0])
 
+def changeColorspace(img):
+    #change from BGR image to yuv image
+    imgNew = cv2.cvtColor(img, cv2.COLOR_BGR2YUV)
+    return imgNew
+
 # Load batches of images and angles and store them into X_train and y_train 
 def generator(stamp, batch_size=32):
     num_samples = len(stamp)
@@ -30,7 +35,7 @@ def generator(stamp, batch_size=32):
             for batch_sample in batch_samples:
                 current_path = './data/IMG/' + batch_sample[0].split('\\')[-1]
                 image = cv2.imread(current_path)
-                images.append(image)
+                images.append(changeColorspace(image))
                 angle = float(batch_sample[3])
                 angles.append(angle)
             X_train = np.array(images)
@@ -50,8 +55,8 @@ from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
 
 model = Sequential()
-model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape=(160,320,3)))
-model.add(Cropping2D(cropping=((70,25),(0,0))))
+model.add(Cropping2D(cropping=((70,25),(0,0)),input_shape=(160,320,3)))
+model.add(Lambda(lambda x: x / 255.0 - 0.5))
 model.add(Convolution2D(24,5,5,subsample=(2,2),activation="relu"))
 model.add(Convolution2D(36,5,5,subsample=(2,2),activation="relu"))
 model.add(Convolution2D(48,5,5,subsample=(2,2),activation="relu"))
