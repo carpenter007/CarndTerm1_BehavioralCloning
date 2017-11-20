@@ -7,7 +7,7 @@ from sklearn.utils import shuffle
 
 # Read in lines of driving log file
 samples = []
-with open('./data/driving_log.csv') as csvfile:
+with open('./data/dataset_log.csv') as csvfile:
     reader = csv.reader(csvfile)
     for sample in reader:
         samples.append(sample)
@@ -33,10 +33,10 @@ def generator(stamp, batch_size=32):
             images = []
             angles = []
             for batch_sample in batch_samples:
-                current_path = './data/IMG/' + batch_sample[0].split('\\')[-1]
+                current_path = './data/IMG/' + batch_sample[0]
                 image = cv2.imread(current_path)
                 images.append(changeColorspace(image))
-                angle = float(batch_sample[3])
+                angle = float(batch_sample[1])
                 angles.append(angle)
             X_train = np.array(images)
             y_train = np.array(angles)
